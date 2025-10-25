@@ -3,6 +3,11 @@ import 'package:marble_grouping_game/constant/app_color.dart';
 import 'package:marble_grouping_game/constant/app_font_style.dart';
 
 class MathAreaPainter extends CustomPainter {
+  final int dividen;
+  final int divisor;
+
+  MathAreaPainter({super.repaint, required this.dividen, required this.divisor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -56,7 +61,7 @@ class MathAreaPainter extends CustomPainter {
 
     // ==== text painter ====
     final textSpanQuestionFormula = TextSpan(
-        text: "24 \u00F7 3",
+        text: "$dividen \u00F7 $divisor",
         style: AppFontStyle.bigText.copyWith(
           color: Colors.white,
         ));
