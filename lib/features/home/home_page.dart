@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:marble_grouping_game/constant/app_color.dart';
 import 'package:marble_grouping_game/constant/app_font_style.dart';
@@ -36,7 +37,8 @@ class HomePage extends StatelessWidget {
                 )),
               ),
               CustomPaint(
-                painter: MathAreaPainter(),
+                painter: MathAreaPainter(
+                    dividen: controller.dividen, divisor: controller.divisor),
                 size: Size(MediaQuery.of(context).size.width,
                     MediaQuery.of(context).size.height / 8),
               ),
@@ -51,8 +53,13 @@ class HomePage extends StatelessWidget {
                       final touch = details.localPosition;
                       for (int i = 0; i < marbles.value.length; i++) {
                         if ((touch - marbles.value[i]).distance < 20) {
-                          controller.draggingIndex.value = i;
-                          break;
+                          // if dragged marble in group, it will break
+                          if (controller.marbleBoxIndex.value[i] != null) {
+                            break;
+                          } else {
+                            controller.draggingIndex.value = i;
+                            break;
+                          }
                         }
                       }
                     },
@@ -86,16 +93,88 @@ class HomePage extends StatelessWidget {
                         final distance = (draggedPos - otherPos).distance;
 
                         if (distance < stickyThreshold) {
-                          final newGroupId = groupIds.value[i];
-                          for (int j = 0; j < groupIds.value.length; j++) {
-                            if (groupIds.value[j] == newGroupId) {
-                              groupIds.value[j] = draggedGroup;
-                            }
-                          }
+                          // check if marble connect to marble that have box
+                          bool isOtherposInGroup =
+                              controller.marbleBoxIndex.value[i] != null;
 
-                          final dir = (otherPos - draggedPos).direction;
-                          marbles.value[i] =
-                              draggedPos + Offset(35 * cos(dir), 35 * sin(dir));
+                          if (isOtherposInGroup) {
+                            int boxesIdxOtherpos =
+                                controller.marbleBoxIndex.value[i]!;
+
+                            var box = controller.boxes[boxesIdxOtherpos];
+
+                            // joinn in other group
+                            final newGroupId =
+                                groupIds.value[i]; // grup si other
+
+                            // ubah semua marble yang 1 grup sama dragged menjadi grupnya other
+                            for (int j = 0; j < groupIds.value.length; j++) {
+                              if (groupIds.value[j] == draggedGroup) {
+                                groupIds.value[j] = newGroupId;
+                              }
+                            }
+
+                            final dir = (draggedPos - otherPos).direction;
+
+                            marbles.value[draggingIndex.value!] =
+                                otherPos + Offset(35 * cos(dir), 35 * sin(dir));
+
+                            final marbleGroupIndices = controller.groupIds.value
+                                .asMap()
+                                .entries
+                                .where((e) => e.value == newGroupId)
+                                .map((e) => e.key)
+                                .toList();
+
+                            // make the marbleboxindex join
+                            for (var idx in marbleGroupIndices) {
+                              controller.marbleBoxIndex.value[idx] =
+                                  boxesIdxOtherpos;
+
+                              // update fill color and outline color of marble too based on boxes theme
+                              controller.marbleColorFill.value[idx] =
+                                  controller.boxesFillColor[boxesIdxOtherpos];
+                              controller.marbleColorOutline.value[idx] =
+                                  controller.boxesBaseColor[boxesIdxOtherpos];
+                            }
+
+                            // refresh
+                            controller.marbleBoxIndex.refresh();
+                            controller.marbleColorFill.refresh();
+                            controller.marbleColorOutline.refresh();
+
+                            // arrange circles in 2 row horizontal on the right side box
+                            const spacing = 35.0;
+                            const offsetFromBox = 20.0;
+                            for (int j = 0;
+                                j < marbleGroupIndices.length;
+                                j++) {
+                              final rowIndex = j % 2;
+                              final colIndex = j ~/ 2;
+
+                              final newPos = Offset(
+                                box.right + offsetFromBox + colIndex * spacing,
+                                box.top +
+                                    box.height / 2 -
+                                    spacing / 2 +
+                                    rowIndex * spacing,
+                              );
+
+                              marbles.value[marbleGroupIndices[j]] = newPos;
+                            }
+                          } else {
+                            // create new group
+                            final newGroupId = groupIds.value[i];
+                            for (int j = 0; j < groupIds.value.length; j++) {
+                              if (groupIds.value[j] == newGroupId) {
+                                groupIds.value[j] = draggedGroup;
+                              }
+                            }
+
+                            final dir = (otherPos - draggedPos).direction;
+                            marbles.value[i] = draggedPos +
+                                Offset(35 * cos(dir), 35 * sin(dir));
+                          }
                         }
                       }
 
@@ -105,17 +184,43 @@ class HomePage extends StatelessWidget {
                       controller.draggingIndex.value = null;
 
                       // Boxes Check Logic
-                      // next...
+                      controller.boxCheck(draggedIndex);
                     },
                     child: SizedBox.expand(
                       child: CustomPaint(
-                        painter: PlaygroundPainter(marbles.value),
-                      ),
+                          painter: PlaygroundPainter(
+                              marbles: marbles.value,
+                              boxes: controller.boxes,
+                              boxesBaseColor: controller.boxesBaseColor,
+                              boxesFillColor: controller.boxesFillColor,
+                              marbleFill: controller.marbleColorFill.value,
+                              marbleOutline:
+                                  controller.marbleColorOutline.value)),
                     ),
                   );
                 }),
               ),
-              Text('Button'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                      onPressed: () {
+                        controller.reset();
+                      },
+                      child: Text('Reset')),
+                  TextButton(
+                      onPressed: () {
+                        bool resultCheck = controller.resultCheck();
+
+                        if (resultCheck) {
+                          Fluttertoast.showToast(msg: 'Your answer is correct');
+                        } else {
+                          Fluttertoast.showToast(msg: 'Wrong, try again!');
+                        }
+                      },
+                      child: Text('Count Boxes')),
+                ],
+              ),
               SizedBox(
                 height: 50,
               ),
