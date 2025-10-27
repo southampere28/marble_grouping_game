@@ -18,6 +18,7 @@ dependencies:
   fluttertoast: ^8.2.12
   audioplayers: ^6.5.1
   confetti: ^0.8.0
+  zoom_tap_animation: ^1.1.0
 
 dev_dependencies:
   flutter_test:
