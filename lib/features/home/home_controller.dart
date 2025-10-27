@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:marble_grouping_game/constant/app_color.dart';
 import 'package:marble_grouping_game/features/home/core/dummy_marble.dart';
@@ -13,6 +15,10 @@ class HomeController extends GetxController {
 
   // answer
   var correctAnswer = 0.obs;
+
+  // confetti controller
+  final isPlaying = false.obs;
+  final confettiController = ConfettiController();
 
   // index marble while drag
   final RxnInt draggingIndex = RxnInt(null);
@@ -246,12 +252,19 @@ class HomeController extends GetxController {
     draggingIndex.value = null;
   }
 
-  void checkAnswer(BuildContext context) {
+  void checkAnswer(BuildContext context) async {
     var result = resultCheck();
-    AppUtil.dialogResult(context, result,
+
+    if (result) {
+      confettiController.play();
+    }
+
+    await AppUtil.dialogResult(context, result,
         countBox: countBox.value,
         correctAnswer: correctAnswer.value,
         reset: reset);
+
+    confettiController.stop();
   }
 
   // checkbox if any marble trying connect box
@@ -395,7 +408,16 @@ class HomeController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+  ]);
     marbles.value =
         DummyMarble.dummyOffsetMarbles.map((e) => Offset(e.dx, e.dy)).toList();
+
+    confettiController.addListener(() {
+      isPlaying.value =
+          confettiController.state == ConfettiControllerState.playing;
+    });
   }
 }

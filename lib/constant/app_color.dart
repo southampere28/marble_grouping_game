@@ -29,7 +29,9 @@ class AppColor {
   static const Color fillC = Color(0xFFE3AA84);
 
   // general color
-  static const Color successColor = Color(0xff28A745); // success/active
+  static const Color successColor = Color(0xFF7BD389); // soft mint green
+  static const Color darkGreen = Color(0xFF3E7C4D);
+  static const Color successShadow = Color(0xFF57A86B); // darker for shadow
   static const Color errorColor = Color(0xffED6363); // error/alert
   static const Color warningColor = Color(0xffFFC107); // pending/caution
   static const Color infoColor = Color(0xff17A2B8); // informational
