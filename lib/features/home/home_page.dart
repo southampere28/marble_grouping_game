@@ -52,40 +52,46 @@ class HomePage extends StatelessWidget {
                         MediaQuery.of(context).size.height / 8),
                   ),
                   Expanded(
-                    child: Obx(() {
-                      final marbles = controller.marbles;
-                      final draggingIndex = controller.draggingIndex;
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = Size(constraints.maxWidth, constraints.maxHeight);
 
-                      return GestureDetector(
-                        onPanStart: (details) {
-                          controller.onTouchStart(details);
-                        },
-                        onPanUpdate: (details) {
-                          controller.onDragUpdate(details);
-                        },
-                        onPanEnd: (_) {
-                          final draggedIndex = draggingIndex.value;
-                          if (draggedIndex == null) return;
-
-                          // Sticky Marble Logic
-                          controller.marbleStick(draggedIndex);
-
-                          // Boxes Check Sticky Logic
-                          controller.boxCheck(draggedIndex);
-                        },
-                        child: SizedBox.expand(
-                          child: CustomPaint(
-                              painter: PlaygroundPainter(
-                                  marbles: marbles.value,
-                                  boxes: controller.boxes,
-                                  boxesBaseColor: controller.boxesBaseColor,
-                                  boxesFillColor: controller.boxesFillColor,
-                                  marbleFill: controller.marbleColorFill.value,
-                                  marbleOutline:
-                                      controller.marbleColorOutline.value)),
-                        ),
-                      );
-                    }),
+                        return Obx(() {
+                          final marbles = controller.marbles;
+                          final draggingIndex = controller.draggingIndex;
+                        
+                          return GestureDetector(
+                            onPanStart: (details) {
+                              controller.onTouchStart(details);
+                            },
+                            onPanUpdate: (details) {
+                              controller.onDragUpdate(details, size);
+                            },
+                            onPanEnd: (_) {
+                              final draggedIndex = draggingIndex.value;
+                              if (draggedIndex == null) return;
+                        
+                              // Sticky Marble Logic
+                              controller.marbleStick(draggedIndex);
+                        
+                              // Boxes Check Sticky Logic
+                              controller.boxCheck(draggedIndex);
+                            },
+                            child: SizedBox.expand(
+                              child: CustomPaint(
+                                  painter: PlaygroundPainter(
+                                      marbles: marbles.value,
+                                      boxes: controller.boxes,
+                                      boxesBaseColor: controller.boxesBaseColor,
+                                      boxesFillColor: controller.boxesFillColor,
+                                      marbleFill: controller.marbleColorFill.value,
+                                      marbleOutline:
+                                          controller.marbleColorOutline.value)),
+                            ),
+                          );
+                        });
+                      }
+                    ),
                   ),
                   ButtonCheckAnswer(controller: controller),
                   SizedBox(

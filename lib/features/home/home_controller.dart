@@ -125,7 +125,7 @@ class HomeController extends GetxController {
   }
 
   // on pan update (drag marble logic)
-  void onDragUpdate(DragUpdateDetails details) {
+  void onDragUpdate(DragUpdateDetails details, Size areaSize) {
     final idx = draggingIndex.value;
     if (idx == null) return;
 
@@ -134,7 +134,20 @@ class HomeController extends GetxController {
 
     for (int i = 0; i < marbles.value.length; i++) {
       if (groupIds.value[i] == groupId) {
-        marbles.value[i] += delta;
+        final newOffset = marbles.value[i] + delta;
+
+        const double radius = 20;
+        final double minX = radius;
+        final double minY = radius;
+        final double maxX = areaSize.width - radius;
+        final double maxY = areaSize.height - radius;
+
+        final constrainedOffset = Offset(
+          newOffset.dx.clamp(minX, maxX),
+          newOffset.dy.clamp(minY, maxY),
+        );
+
+        marbles.value[i] = constrainedOffset;
       }
     }
     marbles.refresh();
